@@ -15,12 +15,12 @@ export default function Test() {
     method: "getBalance"
   });
 
-  const handleDeposit = async (e) => {
+  const handleDeposit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     const amount = toWei(inputValue);
 
     try {
-      const transaction = await prepareContractCall({
+      const transaction  = await prepareContractCall({
         contract: CONTRACT,
         method: "deposit",
         params: [],
@@ -33,7 +33,6 @@ export default function Test() {
 
     } catch (error) {
       console.error('Error sending transaction:', error);
-      alert(`Transaction failed: ${error.message}. See console for details.`);
     }
   };
 
