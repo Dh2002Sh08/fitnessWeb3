@@ -39,6 +39,9 @@ const Login: React.FC = () => {
           <Link href="/customer" aria-current="page" className="hover:bg-sky-500 p-2 rounded-md transition-colors">
             Subscription
           </Link>
+          <Link href="/staking" className="hover:bg-sky-500 p-2 rounded-md transition-colors">
+            Staking
+          </Link>
           <Link href="/profile" className="hover:bg-sky-500 p-2 rounded-md transition-colors">
             About
           </Link>

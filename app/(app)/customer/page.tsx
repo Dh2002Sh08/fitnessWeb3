@@ -1,13 +1,15 @@
-import Test from '@/components/subs'
+import { SubsCription } from '@/components/subs';
 import React from 'react'
-import { ThirdwebProvider } from 'thirdweb/react'
+import { ThirdwebProvider } from 'thirdweb/react';
 
 function page() {
   return (
-    
-    <ThirdwebProvider>
-      <Test />
-    </ThirdwebProvider>
+    <div>
+      <ThirdwebProvider>
+        <SubsCription />
+      </ThirdwebProvider>
+      
+    </div>
   )
 }
 

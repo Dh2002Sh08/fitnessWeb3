@@ -1,152 +1,159 @@
 "use client";
-import { chain, client, CONTRACT } from "@/utils/constants";
+
+import { SUBSCRIPTION_CONTRACT } from "@/utils/contract";
+import { ConnectButton, TransactionButton, useActiveAccount, useReadContract } from "thirdweb/react";
+import { client } from "@/app/client";
+import { chain } from "@/app/chain";
 import { useState } from "react";
-import { prepareContractCall, toWei } from "thirdweb";
-import { ConnectButton, TransactionButton, useActiveAccount, useReadContract, useSendTransaction } from "thirdweb/react";
-import { Button } from "./button";
+import { prepareContractCall, toEther, toWei } from "thirdweb";
 
-export default function Test() {
-  const [inputValue, setAmount] = useState('');
-  const account = useActiveAccount();
-  const { mutate: sendTransaction } = useSendTransaction();
+export const SubsCription = () => {
+    const account = useActiveAccount();
 
-  const { data: getBalance, isLoading: loading } = useReadContract({
-    contract: CONTRACT,
-    method: "getBalance"
-  });
+    const [DepositValue, setDepositValue] = useState(0);
+    const [withdrawAddress, setWithdrawAddress] = useState("");
+    const [Validity, setValidity] = useState("Active" || "Expired");
 
-  const handleDeposit = async (e: { preventDefault: () => void; }) => {
-    e.preventDefault();
-    const amount = toWei(inputValue);
+    const { data: getBalance, isLoading: loading } = useReadContract(
+        {
+            contract: SUBSCRIPTION_CONTRACT,
+            method: "getBalance",
+            queryOptions: {
+                enabled: !!account
+            }
+        });
 
-    try {
-      const transaction  = await prepareContractCall({
-        contract: CONTRACT,
-        method: "deposit",
-        params: [],
-        value : amount,
-      });
+    const { data: getPeriod, isLoading: loadingPeriod } = useReadContract(
+        {
+            contract: SUBSCRIPTION_CONTRACT,
+            method: "period",
+            queryOptions: {
+                enabled: !!account
+            }
+        }
+    );
+    const timeperiod = Number(getPeriod!);
+    const HumanReadableTime = new Date(Number(timeperiod) * 1000).toLocaleString();
 
-      const response = await sendTransaction(transaction);
-      console.log('Transaction Response:', response);
-      alert("Wait for the transaction to be mined");
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-100 via-indigo-200 to-blue-100 p-6">
+            <div className="w-full max-w-lg p-8 bg-white rounded-lg shadow-xl">
+                {/* Connect Wallet */}
+                <div className="flex justify-center mb-6">
+                    <ConnectButton client={client} chain={chain} />
+                </div>
 
-    } catch (error) {
-      console.error('Error sending transaction:', error);
-    }
-  };
+                {/* Account Balance */}
+                <div className="mb-6 text-center">
+                    {account ? (
+                        <>
+                            {loading ? (
+                                <h3 className="text-xl font-semibold text-gray-500">Loading Balance...</h3>
+                            ) : (
+                                <h3 className="text-xl font-semibold text-teal-600">Wallet Balance: {toEther(getBalance!).toString()}</h3>
+                            )}
+                        </>
+                    ) : (
+                        <h1 className="text-2xl font-bold text-gray-700">Connect Your Wallet First</h1>
+                    )}
+                </div>
 
-  return (
-    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-6">
-      <div className="bg-gray-800 rounded-lg p-8 w-full max-w-lg shadow-lg animate-shadow transition-shadow">
-        <h1 className="text-3xl font-semibold text-center mb-6 animate-gradient">Crypto Wallet</h1>
-        <div className="flex justify-center mb-4">
-          <ConnectButton client={client} chain={chain} />
+                {/* Subscription Period */}
+                <div className="mb-6 text-center">
+                    {account ? (<>
+                    {loadingPeriod ? (
+                        <h3 className="text-xl font-semibold text-gray-500">Loading Subscription Period...</h3>
+                    ) : (
+                        <>
+                            <h3 className="text-xl font-semibold text-indigo-600">Your Subscription Will Expire on:-</h3>
+                            <h3 className="text-red-600">{HumanReadableTime}</h3>
+                        </>
+                    )}
+                    </>):(<></>)}
+                </div>
+
+                {/* Deposit & Subscription Actions */}
+                <div className="mb-6">
+                    <input
+                        type="number"
+                        placeholder="0.0"
+                        value={DepositValue}
+                        onChange={(e) => setDepositValue(Number(e.target.value))}
+                        className="w-full p-3 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                    />
+                </div>
+
+                {/* Transaction Buttons */}
+                <div className="w-full space-y-4">
+                    <TransactionButton
+                        transaction={() => (
+                            prepareContractCall({
+                                contract: SUBSCRIPTION_CONTRACT,
+                                method: "deposit",
+                                params: [],
+                                value: toWei(DepositValue.toString()),
+                            })
+                        )}
+                        onTransactionConfirmed={() => setDepositValue(0)}
+                        className="w-full py-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-200"
+                    >
+                        Deposit
+                    </TransactionButton>
+
+                    <TransactionButton
+                        transaction={() =>
+                            prepareContractCall({
+                                contract: SUBSCRIPTION_CONTRACT,
+                                method: "nextPlan",
+                            })
+                        }
+                        onTransactionConfirmed={() => setValidity("Active")}
+                        className="w-full py-3 text-white bg-green-600 rounded-lg hover:bg-green-700 transition duration-200"
+                    >
+                        Buy Subscription
+                    </TransactionButton>
+
+                    {Validity === "Active" ? (
+                        <div className="text-center text-green-600 font-semibold">
+                            <p>Congratulations, Subscription is Activated!</p>
+                        </div>
+                    ) : (
+                        <div className="text-center text-red-600 font-semibold">
+                            <p>Your Subscription is Expired</p>
+                            <button
+                                onClick={() => setValidity("Expired")}
+                                className="text-white bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700 transition duration-200"
+                            >
+                                Activate Subscription
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+                {/* Withdraw Section */}
+                <div className="mb-6">
+                    <input
+                        type="text"
+                        placeholder="Enter withdraw address"
+                        value={withdrawAddress}
+                        onChange={(e) => setWithdrawAddress(e.target.value)}
+                        className="w-full p-3 text-lg border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                    />
+                    <TransactionButton
+                        transaction={() =>
+                            prepareContractCall({
+                                contract: SUBSCRIPTION_CONTRACT,
+                                method: "withdraw",
+                                params: [withdrawAddress],
+                            })
+                        }
+                        onTransactionConfirmed={() => setWithdrawAddress("")}
+                        className="w-full py-3 text-white bg-red-600 rounded-lg hover:bg-red-700 transition duration-200"
+                    >
+                        Withdraw
+                    </TransactionButton>
+                </div>
+            </div>
         </div>
-
-        {account ? (
-          <div>
-            {loading ? (
-              <h2 className="text-xl text-center text-gray-400">Loading...</h2>
-            ) : (
-              <h2 className="text-xl text-center text-gray-200">Balance: {getBalance ? getBalance.toString() : 'N/A'}</h2>
-            )}
-          </div>
-        ) : (
-          <h2 className="text-xl text-center text-red-500">Connect your wallet first</h2>
-        )}
-
-        <input 
-          type="text" 
-          placeholder="Enter Amount To Deposit" 
-          onChange={(e) => setAmount(e.target.value)} 
-          value={inputValue} 
-          className="mt-4 p-3 border border-gray-600 rounded-md w-full bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
-        />
-        <p className="mt-2 text-center text-gray-400">Entered Amount: {inputValue}</p>
-
-        <div className="flex flex-col items-center mt-4 space-y-4">
-          <Button onClick={handleDeposit} className="bg-blue-600 text-white py-2 px-6 rounded-md shadow hover:bg-blue-700 transition">Deposit</Button>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
-            <TransactionButton 
-              transaction={() => prepareContractCall({
-                contract: CONTRACT,
-                method: "withdraw",
-              })}
-              className=" py-2 rounded-md shadow hover:bg-green-700 text-white transition"
-            >
-              Withdraw
-            </TransactionButton>
-
-            <TransactionButton 
-              transaction={() => prepareContractCall({
-                contract: CONTRACT,
-                method: "RegularPlan",
-              })}
-              className="  py-2 rounded-md shadow hover:bg-yellow-600 text-white transition"
-            >
-              Buy Subscription
-            </TransactionButton>
-
-            <TransactionButton 
-              transaction={() => prepareContractCall({
-                contract: CONTRACT,
-                method: "nextPlan",
-              })}
-              
-              className="py-2 rounded-md shadow hover:bg-purple-700 text-white transition"
-            >
-              Next Plan
-            </TransactionButton>
-          </div>
-        </div>
-      </div>
-
-      <style jsx>{`
-        @keyframes gradient {
-          0% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-          100% {
-            background-position: 0% 50%;
-          }
-        }
-
-        .animate-gradient {
-          background: linear-gradient(270deg, #ff0080, #ff8c00, #ff0080, #ff8c00);
-          background-size: 400% 400%;
-          animation: gradient 5s ease infinite;
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-        }
-
-        @keyframes shadow {
-          0% {
-            box-shadow: 0 0 10px rgba(255, 0, 128, 0.7);
-          }
-          25% {
-            box-shadow: 0 0 20px rgba(255, 204, 0, 0.7);
-          }
-          50% {
-            box-shadow: 0 0 30px rgba(0, 204, 255, 0.7);
-          }
-          75% {
-            box-shadow: 0 0 40px rgba(0, 255, 0, 0.7);
-          }
-          100% {
-            box-shadow: 0 0 10px rgba(255, 0, 128, 0.7);
-          }
-        }
-
-        .animate-shadow {
-          animation: shadow 5s ease infinite;
-        }
-      `}</style>
-    </div>
-  );
-}
-
+    );
+};
