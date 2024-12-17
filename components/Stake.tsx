@@ -10,8 +10,8 @@ import { ConnectButton, TransactionButton, useActiveAccount, useReadContract } f
 export const Stake = () => {
     const account = useActiveAccount();
 
-    const [stakeAmount, setStakeAmount] = useState(0);
-    const [withdrawAmount, setWithdrawAmount] = useState(0);
+    const [stakeAmount, setStakeAmount] = useState();
+    const [withdrawAmount, setWithdrawAmount] = useState();
     const [stakingState, setStakingState] = useState("init" || "approved");
     const [isStaking, setIsStaking] = useState(false);
     const [isWithdraw, setIsWithdraw] = useState(false);
