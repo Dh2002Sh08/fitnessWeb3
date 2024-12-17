@@ -10,9 +10,10 @@ import { prepareContractCall, toEther, toWei } from "thirdweb";
 export const SubsCription = () => {
     const account = useActiveAccount();
 
-    const [DepositValue, setDepositValue] = useState(0);
-    const [withdrawAddress, setWithdrawAddress] = useState("");
-    const [Validity, setValidity] = useState("Active" || "Expired");
+    const [DepositValue, setDepositValue] = useState<number>(0); // Default to 0
+    const [withdrawAddress, setWithdrawAddress] = useState<string>(""); // Default to an empty string
+    const [Validity, setValidity] = useState<"Active" | "Expired">("Active"); // Explicit type and default value
+
 
     const { data: getBalance, isLoading: loading } = useReadContract(
         {
