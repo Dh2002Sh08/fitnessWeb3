@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { prepareContractCall, toEther, toWei } from "thirdweb";
 import { approve, balanceOf } from "thirdweb/extensions/erc20";
 import { ConnectButton, TransactionButton, useActiveAccount, useReadContract } from "thirdweb/react";
-import { Button } from "./button";
 
 export const Stake = () => {
     const account = useActiveAccount();
